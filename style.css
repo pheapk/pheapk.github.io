@@ -1,0 +1,6 @@
+.container {  
+  display: block;
+  margin: 50px auto;        
+  border: 1px solid white;
+  text-align: center;
+}

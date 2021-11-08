@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2D Breakout Game</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      canvas {
+        background: #eee;
+        display: block;
+        margin: 50px auto;        
+        border: 1px solid blue;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="myCanvas" width="480" height="320"></canvas>
+
+    <script>
+    //Source: https://developer.mozilla.org/en-US/docs/Games/Tutorials/2D_Breakout_game_pure_JavaScript/Finishing_up
+    // Fri 10/29/2021 initially done 
+    // Sun 11/07/2021 modified 
+    // -- add more comments
+
+      var canvas = document.getElementById("myCanvas");
+      var ctx = canvas.getContext("2d");
+      var ballRadius = 10;
+      var ballColor = "#0095DD";
+      var ballX = canvas.width / 2; // initial ball x position, center
+      var ballY = canvas.height - 30; // initial ball y poistion
+      // random speed on the x axis
+      var dx = Math.random() * (20 + 20) - 20; //Random number between -10 and 9 
+      // speed on y axis
+      var dy = -10;
+      var dyBooster = -1; // increase speed, upward y direction
+      var paddleHeight = 10;
+      var paddleWidth = 100;
+      // center paddle, paddleY set at the bottom when create 
+      var paddleX = (canvas.width - paddleWidth) / 2; 
+      var rightPressed = false; // for tracking the arrow key
+      var leftPressed = false;
+
+      var brickRowCount = 5;
+      var brickColumnCount = 5;
+      var brickWidth = 75;
+      var brickHeight = 20;
+      var brickPadding = 10; // space between paddles
+      var brickOffsettTop = 30; // space to the top
+      var brickOffsetLeft = 30; // space to the left
+
+      var collision = false;
+
+      var score = 0;
+      var lives = 3;
+
+      // draw score on the screen top left
+      function drawScore() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#0095DD";
+        ctx.fillText("Score: " + score, 8, 20);
+      }
+
+      // draw lives on the screen top right
+      function drawLives() {
+          ctx.font = "16px Arial";
+          ctx.fillStyle = "#0095DD";
+          ctx.fillText ("Lives: " + lives, canvas.width - 65, 20);
+      }
+      //defind bricks colum and row
+      var bricks = [];
+      for (var column = 0; column < brickColumnCount; column++) {
+        bricks[column] = [];
+        for (var row = 0; row < brickRowCount; row++) {
+          bricks[column][row] = { x: 0, y: 0, status: 1 };
+        }
+      }
+
+      function drawBrick() {
+        for (var column = 0; column < brickColumnCount; column++) {
+          for (var row = 0; row < brickRowCount; row++) {
+            if (bricks[column][row].status == 1) { // visible
+              var brickX = brickOffsetLeft + column * (brickWidth + brickPadding); // brick x position 
+              var brickY = brickOffsettTop + row * (brickHeight + brickPadding); // brick y position
+              bricks[column][row].x = brickX; // add to globle brick array
+              bricks[column][row].y = brickY;
+              ctx.beginPath();
+              ctx.rect(brickX, brickY, brickWidth, brickHeight);
+              ctx.fillStyle = "#0095DD";
+              ctx.fill();
+              ctx.closePath;
+            }
+          }
+        }
+      }
+
+      document.addEventListener("keydown", keyDownHandler, false); // add listen to the document
+      document.addEventListener("keyup", keyUpHandler, false);
+      document.addEventListener("mousemove", mouseMoveHandler, false);
+
+      // determine which arrow is pressed
+      function keyDownHandler(e) {
+        if (e.key == "Right" || e.key == "ArrowRight") {
+          rightPressed = true;
+        } else if (e.key == "Left" || e.key == "ArrowLeft") {
+          leftPressed = true;
+        }
+      }
+
+      // determine key release
+      function keyUpHandler(e) {
+        if (e.key == "Right" || e.key == "ArrowRight") {
+          rightPressed = false;
+        } else if (e.key == "Left" || e.key == "ArrowLeft") {
+          leftPressed = false;
+        }
+      }
+
+      // move mid paddle with mouse pointer
+      function mouseMoveHandler(e) {
+        // mouse x position relative to canvas
+        // distance between canvas left edge and mouse pointer
+        var relativeX = e.clientX - canvas.offsetLeft; 
+        // "paddleWidth/2" in the condition is used to prevent the paddle from going out of the canvas
+        if (relativeX >= paddleWidth/2 && relativeX <= canvas.width - paddleWidth/2) {
+            paddleX = relativeX - paddleWidth / 2; // middle of the paddle moves with mouse pointer       
+        }
+      }
+
+      function collisionDetection() {
+        for (var column = 0; column < brickColumnCount; column++) {
+          for (var row = 0; row < brickRowCount; row++) {
+            var brick = bricks[column][row];
+            if (brick.status == 1) { // visible              
+              if ( // ball position between the brick with and hight 
+                ballX > brick.x &&
+                ballX < brick.x + brickWidth &&
+                ballY > brick.y &&
+                ballY < brick.y + brickHeight
+              ) {
+                dy = -dy; //+ dyBooster; // hit from top, change direction, get faster
+                brick.status = 0; // invisible after collision
+                ballColor = "#DC143C"; // set a new ball color after first collision
+                score += 1; 
+                if (score == brickColumnCount * brickRowCount) { // score == total score
+                  alert("YOU WON, CONGRATULATIONS!, SCORE:" + score);
+                  document.location.reload(); // reload the page/game when using requestAnimationFrame
+                  //clearInterval(interval); //needed for chrome to end game when using interval = setInterval(draw, 10);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      function drawBall() {
+        ctx.beginPath();
+        ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+        ctx.fillStyle = ballColor; //"#0095DD";
+        ctx.fill();
+        ctx.closePath();
+      }
+      function drawPaddle() {
+        ctx.beginPath();
+        ctx.rect(
+          paddleX,
+          canvas.height - paddleHeight,
+          paddleWidth,
+          paddleHeight
+        );
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        collisionDetection();
+        drawBall();
+        drawBrick();
+        drawPaddle();
+        drawScore();
+        drawLives();
+
+        // if ball x touches the right wall or left wall, change direction
+        if (ballX + dx > canvas.width - ballRadius || ballX + dx < ballRadius) {
+          dx = -dx;
+        }
+        if (ballY + dy < ballRadius) { // ball y touches the top wall
+          dy = -dy;
+        } else if (ballY + dy > canvas.height - ballRadius) {  // the ball hits the floor
+          // the ball falls between the paddle width
+          if (ballX > paddleX && ballX < paddleX + paddleWidth) {
+            dy = -dy + dyBooster; // change direction and increase speed
+          } else { // hit the floor but outside the paddle width, los one live
+            lives --;
+            if (!lives) {  // live = 0
+                alert("Game Over");                
+                document.location.reload(); // use with requestAnimationFrame
+                //clearInterval(interval); //Needed for Chrome to end game, used with interval = setInterval(draw, 10);
+            }else { // reset position of the ball, paddle and also give a new random dx of the ball as well. 
+                ballX = canvas.width/2;
+                ballY = canvas.height - 30;
+                dx = Math.random() * (20 + 20) - 20; //Random number between -10 and 9 
+                paddleX = (canvas.width - paddleWidth)/2;
+            }
+          }
+        }
+        
+        if (rightPressed) { // right arrow pressed
+          paddleX += 17; //move right 17 points
+          if (paddleX + paddleWidth > canvas.width) { // paddle outside the right wall
+            paddleX = canvas.width - paddleWidth; // keep the paddle inside the canvas
+          }
+        } else if (leftPressed) {
+          paddleX -= 17;
+          if (paddleX < 0) { // paddle outside the left wall
+            paddleX = 0; // keep inside canvas
+          }
+        }
+
+        ballX += dx; // move x direct
+        ballY += dy; // move y direction
+
+        requestAnimationFrame(draw); // call itself, let browser determines the refresh rate
+      }
+      
+      //var interval = setInterval(draw, 10); // set refresh rate
+      draw(); 
+    </script>
+  </body>
+</html>
