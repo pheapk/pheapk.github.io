@@ -9,3 +9,27 @@
   width: 650px;
   margin: 0px auto;
 }
+
+a:link {
+  color:green;
+}
+
+a:visited {
+  color:purple;
+}
+
+a:hover {
+  color:red;
+}
+
+h5 {
+  font-family: 'Bakbak One', cursive;
+}
+
+.card-title {
+  font-weight: bold;
+}
+
+.card-text {
+  color: darkgray;
+}
